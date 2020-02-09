@@ -1,0 +1,11 @@
+{
+	"name": "node-json-api",
+	"version": "1.0.0",
+	"main": "index.js",
+	"author": "Paweł Mikołajczyk",
+	"license": "MIT",
+	"private": false,
+	"dependencies": {
+		"path-to-regexp": "^6.1.0"
+	}
+}
