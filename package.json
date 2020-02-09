@@ -5,6 +5,11 @@
 	"author": "Paweł Mikołajczyk",
 	"license": "MIT",
 	"private": false,
+	"keywords": [
+		"node",
+		"json",
+		"api"
+	],
 	"dependencies": {
 		"path-to-regexp": "^6.1.0"
 	}
