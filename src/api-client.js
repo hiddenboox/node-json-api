@@ -4,35 +4,36 @@ const http = require('http');
 const {pathToRegexp} = require('path-to-regexp');
 const {createResponse} = require('./response');
 const {createRequest} = require('./request');
+const {createRoutesRegistry} = require('./routes-registry');
 const packageJson = require('../package.json');
 
 function createApiClient() {
-	const handlers = [];
+	const routesRegistry = createRoutesRegistry();
 
 	const httpClient = http.createServer((request, response) => {
 		response.setHeader('X-Node-Json-Api-Version', packageJson.version);
 
 		const {url, method} = request;
 
-		const requestHandler = handlers.find(handler => {
-			const pathRegexp = pathToRegexp(handler.path);
-			return pathRegexp.test(url) && handler.method === method;
+		if (!url) {
+			return;
+		}
+
+		const routes = routesRegistry.getAll();
+
+		const routeKey = Object.keys(routes).find(path => {
+			const pathRegexp = pathToRegexp(path);
+			return pathRegexp.test(url) && routes[path][method];
 		});
 
-		if (requestHandler) {
+		if (routeKey) {
 			console.log(`Found handler for ${method} ${url}`);
-			requestHandler.handler(
-				createRequest(request, requestHandler.path),
+			routes[routeKey][method](
+				createRequest(request, routeKey),
 				createResponse(response),
 			);
 		}
 	});
-
-	function hasRoute(path, method) {
-		return handlers.find(
-			handler => handler.path === path && handler.method == method,
-		);
-	}
 
 	function createRoutesBasedOnApiDirectory() {
 		const routesToRegister = [];
@@ -93,13 +94,8 @@ function createApiClient() {
 	const fileBasedRoutes = createRoutesBasedOnApiDirectory();
 
 	fileBasedRoutes.forEach(({path, method, handler}) => {
-		if (hasRoute(path, method)) {
-			console.warn(`Handler for ${method} ${path} already registered!`);
-			return;
-		}
-
 		console.log(`Adding handler for ${method} ${path}`);
-		handlers.push({
+		routesRegistry.add({
 			path,
 			method,
 			handler,
@@ -122,13 +118,8 @@ function createApiClient() {
 		},
 
 		route({path, method, handler}) {
-			if (hasRoute(path, method)) {
-				console.warn(`Handler for ${method} ${path} already registered!`);
-				return;
-			}
-
 			console.log(`Adding handler for ${method} ${path}`);
-			handlers.push({
+			routesRegistry.add({
 				path,
 				method,
 				handler,
