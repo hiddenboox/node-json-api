@@ -3,12 +3,12 @@ function createResponse(httpServerResponse) {
 		ok(data) {
 			const stringData = JSON.stringify(data);
 
-			httpServerResponse
-				.writeHead(200, {
-					'Content-Length': Buffer.byteLength(stringData),
-					'Content-Type': 'application/json',
-				})
-				.end(stringData);
+			httpServerResponse.writeHead(200, {
+				'Content-Length': Buffer.byteLength(stringData),
+				'Content-Type': 'application/json',
+			});
+
+			httpServerResponse.end(stringData);
 		},
 
 		notFound() {
