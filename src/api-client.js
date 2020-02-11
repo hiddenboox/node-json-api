@@ -1,3 +1,5 @@
+const fs = require('fs');
+const path = require('path');
 const http = require('http');
 const {pathToRegexp} = require('path-to-regexp');
 const {createResponse} = require('./response');
@@ -31,6 +33,78 @@ function createApiClient() {
 			handler => handler.path === path && handler.method == method,
 		);
 	}
+
+	function createRoutesBasedOnApiDirectory() {
+		const routesToRegister = [];
+
+		function registerRoutesForDirectory(directory = '') {
+			const routes = fs.readdirSync(path.resolve('api', directory));
+
+			const routesPaths = routes.map(route =>
+				path.resolve('api', directory, route),
+			);
+
+			routesPaths.forEach((routePath, index) => {
+				if (!fs.statSync(routePath).isDirectory()) {
+					const routeHandler = require(routePath);
+
+					const [parsedPath, parsedMethod] = parseRoute(
+						routes[index],
+						directory,
+					);
+
+					routesToRegister.push({
+						path: (directory ? '/' + directory : '') + parsedPath,
+						method: parsedMethod.toUpperCase(),
+						handler: routeHandler,
+					});
+				} else {
+					registerRoutesForDirectory(
+						routePath
+							.split(path.sep)
+							.slice(-1)
+							.join(''),
+					);
+				}
+			});
+		}
+
+		function parseRoute(route, directory) {
+			const [parsedPath, parsedMethod] = route.split('.').map((part, index) => {
+				if (index === 0) {
+					if (part === 'index') {
+						return directory ? '' : '/';
+					}
+
+					return '/' + part;
+				}
+
+				return part;
+			});
+
+			return [parsedPath, parsedMethod];
+		}
+
+		registerRoutesForDirectory();
+
+		return routesToRegister;
+	}
+
+	const fileBasedRoutes = createRoutesBasedOnApiDirectory();
+
+	fileBasedRoutes.forEach(({path, method, handler}) => {
+		if (hasRoute(path, method)) {
+			console.warn(`Handler for ${method} ${path} already registered!`);
+			return;
+		}
+
+		console.log(`Adding handler for ${method} ${path}`);
+		handlers.push({
+			path,
+			method,
+			handler,
+		});
+	});
 
 	return {
 		start(port = 8080) {
