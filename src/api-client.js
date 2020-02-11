@@ -26,6 +26,12 @@ function createApiClient() {
 		}
 	});
 
+	function hasRoute(path, method) {
+		return handlers.find(
+			handler => handler.path === path && handler.method == method,
+		);
+	}
+
 	return {
 		start(port = 8080) {
 			console.log('Starting server...');
@@ -41,7 +47,12 @@ function createApiClient() {
 			});
 		},
 
-		route(path, method, handler) {
+		route({path, method, handler}) {
+			if (hasRoute(path, method)) {
+				console.warn(`Handler for ${method} ${path} already registered!`);
+				return;
+			}
+
 			console.log(`Adding handler for ${method} ${path}`);
 			handlers.push({
 				path,
@@ -51,7 +62,11 @@ function createApiClient() {
 		},
 
 		get(path, handler) {
-			this.route(path, 'GET', handler);
+			this.route({
+				path,
+				method: 'GET',
+				handler,
+			});
 		},
 	};
 }
