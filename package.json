@@ -3,6 +3,10 @@
 	"version": "1.0.3",
 	"main": "index.js",
 	"author": "Paweł Mikołajczyk",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/Miklet/node-json-api"
+	},
 	"license": "MIT",
 	"private": false,
 	"keywords": [
