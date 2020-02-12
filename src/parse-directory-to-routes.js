@@ -27,11 +27,15 @@ function parseDirectoryToRoutes(directory) {
 					handler: routeHandler,
 				});
 			} else {
+				const nextDirectoryToParse = routePath
+					.split(path.sep)
+					.slice(-1)
+					.join('');
+
 				const nestedRoutes = parseDirectoryToRoutesRecursively(
-					routePath
-						.split(path.sep)
-						.slice(-1)
-						.join(''),
+					currentDirectory
+						? path.join(currentDirectory, nextDirectoryToParse)
+						: nextDirectoryToParse,
 				);
 
 				routes.push(...nestedRoutes);
@@ -70,6 +74,8 @@ function createPath(directory, path) {
 	// finally we add path parsed from filename
 	result += path;
 
+	result = convertDynamicParams(result);
+
 	return ensureNoTrailingSlash(result);
 }
 
@@ -77,6 +83,24 @@ function ensureNoTrailingSlash(path) {
 	return path.split('/').length > 2 && path.endsWith('/')
 		? path.slice(0, -1)
 		: path;
+}
+
+function convertDynamicParams(path) {
+	const result = path
+		.split('')
+		.map(character => {
+			switch (character) {
+				case '[':
+					return ':';
+				case ']':
+					return '';
+				default:
+					return character;
+			}
+		})
+		.join('');
+
+	return result;
 }
 
 module.exports = {
